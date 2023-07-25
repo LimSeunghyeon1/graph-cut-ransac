@@ -81,6 +81,20 @@ namespace gcransac
 		}
 	};
 
+
+	class Plane3D : public Model
+	{
+	public:
+		Plane3D() :
+			Model(Eigen::MatrixXd(4, 1))
+		{}
+		Plane3D(const Plane3D& other)
+		{
+			descriptor = other.descriptor;
+		}
+	};
+
+
 	class FundamentalMatrix : public Model
 	{
 	public:
