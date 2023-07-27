@@ -360,6 +360,81 @@ py::tuple findLine2D(py::array_t<double>  x1y1_,
 	return py::make_tuple(F_, inliers_);
 }
 
+py::tuple findPlane3D(py::array_t<double>  x1y1_,
+	int w1, int h1,
+	py::array_t<double>  probabilities_,
+	double threshold,
+	double conf,
+	int max_iters,
+	int min_iters,
+	double spatial_coherence_weight,
+	bool use_sprt,
+	double min_inlier_ratio_for_sprt,
+	int sampler,
+	int neighborhood,
+	int lo_number,
+	double neighborhood_size)
+{
+	py::buffer_info buf1 = x1y1_.request();
+	size_t NUM_TENTS = buf1.shape[0];
+	size_t DIM = buf1.shape[1];
+
+	if (DIM != 3) {
+		throw std::invalid_argument("x1y1 should be an array with dims [n,3], n>=3");
+	}
+	if (NUM_TENTS < 3) {
+		throw std::invalid_argument("x1y1 should be an array with dims [n,3], n>=3");
+	}
+
+	double *ptr1 = (double *)buf1.ptr;
+	std::vector<double> x1y1;
+	x1y1.assign(ptr1, ptr1 + buf1.size);
+
+    std::vector<double> probabilities;
+    if (sampler == 3 || sampler == 4)
+    {
+        py::buffer_info buf_prob = probabilities_.request();
+        double* ptr_prob = (double*)buf_prob.ptr;
+        probabilities.assign(ptr_prob, ptr_prob + buf_prob.size);        
+    }
+
+	std::vector<double> linemodel(4);
+	std::vector<bool> inliers(NUM_TENTS);
+
+	int num_inl = findPlane3D_(x1y1,
+		probabilities,
+		inliers,
+		linemodel,
+		w1, h1,
+		threshold,
+		conf,
+		max_iters,
+		min_iters,
+		spatial_coherence_weight,
+		use_sprt,
+		min_inlier_ratio_for_sprt,
+		sampler,
+		neighborhood,
+		neighborhood_size,
+		lo_number);
+
+	py::array_t<bool> inliers_ = py::array_t<bool>(NUM_TENTS);
+	py::buffer_info buf3 = inliers_.request();
+	bool *ptr3 = (bool *)buf3.ptr;
+	for (size_t i = 0; i < NUM_TENTS; i++)
+		ptr3[i] = inliers[i];
+	if (num_inl == 0) {
+		return py::make_tuple(pybind11::cast<pybind11::none>(Py_None), inliers_);
+	}
+	py::array_t<double> F_ = py::array_t<double>({ 3 });
+	py::buffer_info buf2 = F_.request();
+	double *ptr2 = (double *)buf2.ptr;
+	for (size_t i = 0; i < 4; i++)
+		ptr2[i] = linemodel[i];
+	return py::make_tuple(F_, inliers_);
+}
+
+
 py::tuple findGravityEssentialMatrix(
 	py::array_t<double>  correspondences_,
 	py::array_t<double>  source_gravity_,
@@ -907,6 +982,23 @@ PYBIND11_PLUGIN(pygcransac) {
 		py::arg("solver") = 0);
 
 	m.def("findLine2D", &findLine2D, R"doc(some doc)doc",
+		py::arg("x1y1"),
+		py::arg("w1"),
+		py::arg("h1"),
+		py::arg("probabilities"),
+		py::arg("threshold") = 1.0,
+		py::arg("conf") = 0.99,
+		py::arg("max_iters") = 10000,
+		py::arg("min_iters") = 50,
+		py::arg("spatial_coherence_weight") = 0.975,
+		py::arg("use_sprt") = false,
+		py::arg("min_inlier_ratio_for_sprt") = 0.00001,
+		py::arg("sampler") = 0,
+		py::arg("neighborhood") = 1,
+		py::arg("lo_number") = 50,
+		py::arg("neighborhood_size") = 20.0);
+
+	m.def("findPlane3D", &findPlane3D, R"doc(some doc)doc",
 		py::arg("x1y1"),
 		py::arg("w1"),
 		py::arg("h1"),
