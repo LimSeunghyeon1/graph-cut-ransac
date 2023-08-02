@@ -426,7 +426,7 @@ py::tuple findPlane3D(py::array_t<double>  x1y1_,
 	if (num_inl == 0) {
 		return py::make_tuple(pybind11::cast<pybind11::none>(Py_None), inliers_);
 	}
-	py::array_t<double> F_ = py::array_t<double>({ 3 });
+	py::array_t<double> F_ = py::array_t<double>({ 4 });
 	py::buffer_info buf2 = F_.request();
 	double *ptr2 = (double *)buf2.ptr;
 	for (size_t i = 0; i < 4; i++)
