@@ -510,8 +510,8 @@ int findPlane3D_(
 	AbstractSampler *sampler_ptr = main_sampler.release();
 	delete sampler_ptr;
 
-	AbstractNeighborhood *neighborhood_graph_ptr = neighborhood_graph.release();
-	delete neighborhood_graph_ptr;
+	// AbstractNeighborhood *neighborhood_graph_ptr = neighborhood_graph.release();
+	// delete neighborhood_graph_ptr;
 
 	// The number of inliers found
 	return num_inliers;
